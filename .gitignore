@@ -1,3 +1,9 @@
+# Frontend static export copied into the backend image at build/dev time
+backend/static/
+
+# Scratch output from local E2E test runs (uv cache, test DB, logs)
+.e2e-tmp/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -60,6 +66,10 @@ cover/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+
+# FinAlly runtime SQLite volume (db/ dir is tracked via .gitkeep, the db file itself is not)
+/db/*.db
+/db/*.db-journal
 
 # Flask stuff:
 instance/

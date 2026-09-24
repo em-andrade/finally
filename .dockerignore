@@ -1,0 +1,32 @@
+# Keep the Docker build context small and avoid copying host-built artifacts
+# (a host backend/.venv or frontend/node_modules baked into the image causes
+# broken interpreter paths and defeats Docker's own dependency layer caching).
+
+.git
+.github
+.claude
+
+# Python
+**/__pycache__/
+**/*.py[cod]
+backend/.venv/
+.venv/
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/coverage/
+
+# Runtime data / env
+db/*.db
+db/*.db-journal
+.env
+.env.*
+!.env.example
+
+# Docs, tests, scratch (backend/README.md is kept - hatchling's build requires it)
+planning/
+test/
+.e2e-tmp/
+/*.md

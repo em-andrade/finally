@@ -1,0 +1,47 @@
+# E2E test infrastructure: the built app container + a Playwright runner container.
+# Keeps browser dependencies out of the production image (see planning/PLAN.md section 12).
+#
+# Usage (from repo root):
+#   docker compose -f test/docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from playwright
+#
+# NOTE: unverified in this environment — no Docker daemon was available in the sandbox this
+# suite was authored/run in. The app itself was exercised directly (uvicorn + the frontend's
+# static export, LLM_MOCK=true) — see the Integration Tester's report for exact commands.
+# This compose file matches the Dockerfile/docker-compose.yml built by the DevOps Engineer;
+# it needs a real `docker compose` run to confirm networking/env wiring before relying on it in CI.
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    environment:
+      - LLM_MOCK=true
+      - OPENROUTER_API_KEY=unused-mock-mode
+      - MASSIVE_API_KEY=
+    ports:
+      - '8000:8000'
+    healthcheck:
+      test: ['CMD', 'python3', '-c', "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  playwright:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM mcr.microsoft.com/playwright:v1.48.0-jammy
+        WORKDIR /work
+        COPY package.json package-lock.json* ./
+        RUN npm install
+        COPY . .
+        CMD ["npx", "playwright", "test"]
+    environment:
+      - BASE_URL=http://app:8000
+      - CI=true
+    depends_on:
+      app:
+        condition: service_healthy
+    volumes:
+      - ./playwright-report:/work/playwright-report
